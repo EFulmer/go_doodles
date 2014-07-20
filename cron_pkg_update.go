@@ -4,17 +4,17 @@ package main
 
 import (
         "fmt"
+        "os"
         "os/exec"
 )
 
 func main() {
         update := exec.Command("brew", "update")
-        out, err := update.Output()
+        _, err := update.Output()
         
         // TODO replace with cleanly writing to stdout using the Cmd struct's
         // fields
         if err != nil {
-                fmt.Print(err)
+                fmt.Println(os.Stderr, err)
         } 
-        fmt.Printf("%s", out)
 }
