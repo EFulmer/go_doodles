@@ -1,7 +1,6 @@
 // third version
 // runs a timer and writes results to a log file
 
-// TODO do with reg file not log file, write header each time
 package main
 
 import (
@@ -12,6 +11,8 @@ import (
 	"path"
 	"time"
 )
+
+const LOG_FILE_NAME = ".brew_update_log"
 
 func AppendFile(name string) (*os.File, error) {
 	if _, err := os.Stat(name); err != nil {
@@ -24,11 +25,11 @@ func AppendFile(name string) (*os.File, error) {
 
 func main() {
 	cmd := exec.Command("brew", "update")
-	var cmdOut bytes.Buffer
-	var cmdErr bytes.Buffer
+	var bufout bytes.Buffer
+	var buferr bytes.Buffer
 
 	home := os.Getenv("HOME")
-	logPath := path.Join(home, "brew_cron_log.txt")
+	logPath := path.Join(home, LOG_FILE_NAME)
 	logFile, err := AppendFile(logPath)
 
 	if err != nil {
@@ -36,14 +37,18 @@ func main() {
 	}
 	defer logFile.Close()
 
-	logger := log.New(logFile, "cron", log.LstdFlags)
-	cmd.Stdout = &cmdOut
-	cmd.Stderr = &cmdErr
+	cmd.Stdout = &bufout
+	cmd.Stderr = &buferr
 	start := time.Now()
 	cmd.Run()
 
 	elapsed := time.Since(start)
-	logger.Printf("Time needed to run: %v\n", elapsed)
-	logger.Printf("Stdout from brew update: %q\n", cmdOut.String())
-	logger.Printf("Stderr from brew update: %q\n", cmdErr.String())
+	logFile.WriteString(start.String())
+	logFile.WriteString("\nTime needed to run: ")
+	logFile.WriteString(elapsed.String())
+	logFile.WriteString("\nStdout from brew update: ")
+	logFile.WriteString(bufout.String())
+	logFile.WriteString("\nStderr from brew update: ")
+	logFile.WriteString(buferr.String())
+	logFile.WriteString("\n\n")
 }
