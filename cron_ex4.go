@@ -34,7 +34,7 @@ func testConn(status chan error) {
 }
 
 func main() {
-	cmd := exec.Command("brew", "update")
+	cmd := exec.Command("/usr/local/bin/brew", "update")
 	var bufout bytes.Buffer
 	var buferr bytes.Buffer
 
@@ -53,12 +53,14 @@ func main() {
 	cmd.Stdout = &bufout
 	cmd.Stderr = &buferr
 	start := time.Now()
-	cmd.Run()
+	err = cmd.Run()
 
 	elapsed := time.Since(start)	
 	timeTaken := fmt.Sprintf("\nTime needed to run: %v\n", elapsed.String())
 	stdOut := fmt.Sprintf("Stdout from brew update: %v\n", bufout.String())
 	stdErr := fmt.Sprintf("Stderr from brew update: %v\n", buferr.String())
+
+	logFile.WriteString(start.String())
 
 	netStat := <-status
 	if netStat != nil {
@@ -67,7 +69,13 @@ func main() {
 		logFile.WriteString(errMsg)
 	}
 
-	logFile.WriteString(start.String())
+	if err != nil {
+		errMsg := fmt.Sprintf("Error encountered in executing brew update: %v\n",
+			err.Error())
+		logFile.WriteString(errMsg)
+		log.Fatal(errMsg)
+	}
+
 	logFile.WriteString(timeTaken)
 	logFile.WriteString(stdOut)
 	logFile.WriteString(stdErr)
